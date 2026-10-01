@@ -324,13 +324,13 @@ static rvalue_stack *rvalue_stack_spill(rvalue_stack *old_stack, VALUE *handle, 
 {
     rvalue_stack *stack;
     *handle = TypedData_Make_Struct(0, rvalue_stack, &JSON_Parser_rvalue_stack_type, stack);
-    *stack_ref = stack;
-    MEMCPY(stack, old_stack, rvalue_stack, 1);
 
     stack->capa = old_stack->capa << 1;
     stack->ptr = ALLOC_N(VALUE, stack->capa);
     stack->type = RVALUE_STACK_HEAP_ALLOCATED;
     MEMCPY(stack->ptr, old_stack->ptr, VALUE, old_stack->head);
+    stack->head = old_stack->head;
+    *stack_ref = stack;
     return stack;
 }
 
@@ -514,13 +514,13 @@ static json_frame_stack *json_frame_stack_spill(json_frame_stack *old_stack, VAL
 {
     json_frame_stack *stack;
     *handle = TypedData_Make_Struct(0, json_frame_stack, &JSON_Parser_frame_stack_type, stack);
-    *stack_ref = stack;
-    MEMCPY(stack, old_stack, json_frame_stack, 1);
 
     stack->capa = old_stack->capa << 1;
     stack->ptr = ALLOC_N(json_frame, stack->capa);
     stack->type = RVALUE_STACK_HEAP_ALLOCATED;
     MEMCPY(stack->ptr, old_stack->ptr, json_frame, old_stack->head);
+    stack->head = old_stack->head;
+    *stack_ref = stack;
     return stack;
 }
 
