@@ -100,8 +100,22 @@ module JSON
       end
     })
 
-    generator::State.rfc8785_sort_keys_proc = shareable_lambda(->(hash) {
-      hash.sort_by { |k,| k.to_s.encode(Encoding::UTF_16) }.to_h
+    generator::State.rfc8785_sort_keys_proc = shareable_lambda(->(hash, unicode_subset = nil) {
+      hash.sort_by do |key,|
+        string = key.to_s
+        if unicode_subset
+          utf8 = string.encoding == Encoding::BINARY ? string.dup.force_encoding(Encoding::UTF_8) : string.encode(Encoding::UTF_8)
+          if violation = UnicodeSubset.violation(utf8, unicode_subset)
+            cp = violation.first
+            character = cp ? format('U+%04X', cp) : 'invalid UTF-8 sequence'
+            raise GeneratorError.new("#{character} is not allowed by unicode_subset: #{unicode_subset.inspect}", string)
+          end
+        end
+        string.encode(Encoding::UTF_16)
+      rescue EncodingError => error
+        raise unless unicode_subset
+        raise GeneratorError.new(error.message, string)
+      end.to_h
     })
 
     JSON.generator = generator

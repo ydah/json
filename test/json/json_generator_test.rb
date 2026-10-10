@@ -56,6 +56,17 @@ class JSONGeneratorTest < Test::Unit::TestCase
     assert_equal '{"a":1,"b":2}', dump(a: 1, b: 2)
   end
 
+  def test_generate_small_integers
+    values = [-2**63, -2**62, -10, -1, *(0..10), 2**62 - 1, 2**63] * 20
+    expected = "[#{values.join(',')}]"
+    assert_equal expected, JSON.generate(values)
+    assert_equal expected, JSON::Coder.new.dump(values)
+
+    io = StringIO.new
+    JSON.dump(values, io, buffer_initial_length: 1)
+    assert_equal expected, io.string
+  end
+
   def test_dump_strict
     assert_equal '{}', dump({}, strict: true)
 
@@ -367,6 +378,8 @@ class JSONGeneratorTest < Test::Unit::TestCase
       space_before: "",
       sort_keys: false,
       rfc8785: false,
+      unicode_subset: nil,
+      on_invalid_char: :raise,
     }.sort_by { |n,| n.to_s }.to_h, state.to_h.sort_by { |n,| n.to_s }.to_h)
 
     state = JSON::State.new(allow_duplicate_key: true)
@@ -387,6 +400,8 @@ class JSONGeneratorTest < Test::Unit::TestCase
       space_before: "",
       sort_keys: false,
       rfc8785: false,
+      unicode_subset: nil,
+      on_invalid_char: :raise,
     }.sort_by { |n,| n.to_s }, state.to_h.sort_by { |n,| n.to_s })
   end
 
